@@ -1,0 +1,37 @@
+<%#
+kind: PXELinux
+name: Alces::EL6::Generic
+oses:
+- CentOS 6
+- RedHat 6
+- SL 6
+%>
+###################################################################
+# Generic EL6 Alces Build Template - 2008-2014 Alces Software Ltd #
+###################################################################
+
+###############
+# PARAMETERS  #
+###############
+# Host params [default]
+# - syslog [director.prv.cluster]
+
+DEFAULT menu
+PROMPT 0
+MENU TITLE Alces Software Boot Menu
+TIMEOUT 20
+TOTALTIMEOUT 600
+ONTIMEOUT BUILD
+
+LABEL LOCAL
+        MENU LABEL (local)
+        LOCALBOOT -1
+
+LABEL BUILD
+        kernel <%= @kernel %>
+        MENU LABEL BUILD
+	MENU DEFAULT
+        append initrd=<%=@initrd%> ksdevice=bootif nicdelay=50 rdblacklist=nouveau linksleep=50 blacklist=nouveau syslog=<%=@host.params['syslog'] || 'director.prv.cluster'%> dhcptimeout=180 kssendmac ks=<%= foreman_url('provision')%>
+        ipappend 2
+
+MENU end

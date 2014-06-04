@@ -1,0 +1,27 @@
+<%#
+kind: ptable
+name: Alces::EL6::Generic
+oses:
+- CentOS 6
+- RedHat 6
+- SL 6
+%>
+###################################################################
+# Generic EL6 Alces Build Template - 2008-2014 Alces Software Ltd #
+###################################################################
+
+###############
+# PARAMETERS  #
+###############
+# Host params [default]
+# - disk1 [sda]
+
+zerombr
+clearpart --all --initlabel
+part /boot --fstype ext4 --size=4096 --asprimary --ondisk <%=@host.params['disk1']%>
+part pv.01 --size=1 --grow --asprimary --ondisk <%=@host.params['disk1']%>
+volgroup system pv.01
+logvol  /  --fstype ext4 --vgname=system  --size=1  --name=root --grow
+logvol  swap  --fstype swap --vgname=system  --size=8096  --name=swap1
+logvol  /var --fstype ext4 --vgname=system --size=8096 --name=var
+logvol /tmp --fstype ext4 --vgname=system --size=16384 --name=tmp

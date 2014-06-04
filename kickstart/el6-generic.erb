@@ -4,22 +4,15 @@ name: Alces::EL6::Generic
 oses:
 - CentOS 6
 - SL 6
-- RHEL 6
+- RedHat 6
 %>
-<%
-  rhel_compatible = @host.operatingsystem.family == 'Redhat' && @host.operatingsystem.name != 'Fedora'
-  os_major = @host.operatingsystem.major.to_i
-  realm_compatible = (@host.operatingsystem.name == "Fedora" && os_major >= 20) || (rhel_compatible && os_major >= 7)
-  # safemode renderer does not support unary negation
-  realm_incompatible = (@host.operatingsystem.name == "Fedora" && os_major < 20) || (rhel_compatible && os_major < 7)
-  pm_set = @host.puppetmaster.empty? ? false : true
-  puppet_enabled = pm_set || @host.params['force-puppet']
-%>
-###################
-# INFO AND USAGEE #
-###################
-# Generic EL6 Alces Build
-#
+###################################################################
+# Generic EL6 Alces Build Template - 2008-2014 Alces Software Ltd #
+###################################################################
+
+###############
+# PARAMETERS  #
+###############
 # Host params [default] 
 # - time-zone [Europe/London
 # - vnc [false]
@@ -27,8 +20,11 @@ oses:
 # - serial [false]
 #   - console_device [ttyS0]
 #   - console_speed [115200]
-# - disk [sda]
+# - disk1 [sda]
 # - ntp-server [director.prv.cluster]
+# - ssh [true]
+#   - sshpasswd [sshbuild!]
+
 
 ########
 # BASE #
@@ -38,6 +34,14 @@ install
 skipx
 firstboot --disable
 reboot
+<% if @host.params['vnc'].to_s.downcase == 'true' -%>
+vnc --password=<%= @host.params['vncpasswd'] || 'vncbuild!'%>
+<% else -%>
+text
+<% end -%>
+<% unless @host.params['ssh'].to_s.downcase == 'false' -%>
+sshpw --username=root <%=@host.params['sshpasswd'] || 'sshbuild!'%>
+<%end-%>
 
 ################
 # LOCALIZATION #
@@ -66,7 +70,7 @@ services --disabled avahi-daemon,avahi-dnsconfd,bluetooth,cups,gmetad,httpd,ipta
 # BOOTLOADER #
 ##############
 <% 
-if !(@host.params['serial'].to_s.empty?) && @host.params['serial'].to_s.downcase != 'false'
+if @host.params['serial'].to_s.downcase == 'true'
   append="console=<%= @host.parms['console_device'] || 'ttyS0' %>,<%= @host.parms['console_speed'] || '115200'%>"
 end
 -%>
@@ -79,12 +83,6 @@ bootloader --location=mbr --append="nofb quiet splash=quiet norhgb <%=append%>"
 %include /tmp/diskpart.cfg
 <% else -%>
 <%= @host.diskLayout %>
-<% end -%>
-
-<% if !(@host.params['vnc'].to_s.empty?) && @host.parms['vnc'].to_s.downcase != 'false' -%>
-vnc --password="<%= @host.params['vncpasswd'] || 'vncbuild!'%>"
-<% else -%>
-text
 <% end -%>
 
 ############
@@ -138,7 +136,7 @@ sleep 2
 /usr/sbin/hwclock --systohc
 
 #Some systems hang when redirecting grub boot messages over serial consoles
-<% if !(@host.params['serial'].to_s.empty?) && @host.params['serial'].to_s.downcase != 'false' -%>
+<% if @host.params['serial'].to_s.downcase == 'true' -%>
 echo "Redirecting grub serial output"
 sed -i --follow-symlinks -e 's|^serial|#serial|g' /etc/grub.conf
 sed -i --follow-symlinks -e 's|^terminal|#terminal|g' /etc/grub.conf

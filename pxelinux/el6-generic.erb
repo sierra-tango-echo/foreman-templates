@@ -15,6 +15,9 @@ oses:
 ###############
 # Host params [default]
 # - syslog [director.prv.cluster]
+# - serial [false]
+#   - console_device [ttyS0]
+#   - console_speed [115200]
 
 DEFAULT menu
 PROMPT 0
@@ -31,7 +34,7 @@ LABEL BUILD
         kernel <%= @kernel %>
         MENU LABEL BUILD
 	MENU DEFAULT
-        append initrd=<%=@initrd%> ksdevice=bootif nicdelay=50 rdblacklist=nouveau linksleep=50 blacklist=nouveau syslog=<%=@host.params['syslog'] || 'director.prv.cluster'%> dhcptimeout=180 kssendmac ks=<%= foreman_url('provision')%>
+        append initrd=<%=@initrd%> ksdevice=bootif nicdelay=50 rdblacklist=nouveau linksleep=50 blacklist=nouveau syslog=<%=@host.params['syslog'] || 'director.prv.cluster'%> dhcptimeout=180 kssendmac ks=<%= foreman_url('provision')%><% if @host.params['serial'].to_s.downcase == 'true' %> console=<%=@host.params['console_device'] || 'ttyS0' %>,<%=@host.params['console_speed'] || '115200'%><%end%>
         ipappend 2
 
 MENU end
